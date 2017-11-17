@@ -1,0 +1,232 @@
+<button onclick="spinning = !spinning">Toggle</button>
+<canvas id="canvas" width="800" height="600"></canvas>
+
+<style>
+  #canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+    background-color: #fafafa;
+  }
+</style>
+
+<script>
+  let spinning = false;
+
+  class PolygonFace {
+    constructor(vertices, color) {
+      this.vertices = vertices;
+      this.color = color;
+
+      // find mid point
+      const totals = vertices.reduce((sums, vertex) => {
+        return sums.map((sum, sumIndex) => sum += vertex[sumIndex]);
+      }, [0, 0, 0]);
+      this.middle = totals.map(val => val / vertices.length);
+
+      // find face normal
+      this.normal = [0, 0, 0];
+      vertices.forEach((vertex, vertexIndex) => {
+        const nextVertex = vertices[(vertexIndex + 1) % vertices.length];
+
+        this.normal[0] += (vertex[1] - nextVertex[1]) * (vertex[2] + nextVertex[2]);
+        this.normal[1] += (vertex[2] - nextVertex[2]) * (vertex[0] + nextVertex[0]);
+        this.normal[2] += (vertex[0] - nextVertex[0]) * (vertex[1] + nextVertex[1]);
+      });
+
+      const normalLength = Math.sqrt((this.normal[0] * this.normal[0]) + (this.normal[1] * this.normal[1]) + (this.normal[2] * this.normal[2]));
+      this.normal = normalizeVector(this.normal);
+    }
+  }
+
+  const CANVAS_WIDTH = 800
+  const CANVAS_HEIGHT = 600;
+
+  // cube
+  const cubeFaces = [
+    //new PolygonFace([ [0, 0, 50], [0, 100, 50], [0, 100, 0], [0, 0, 0] ], 'green'),
+    //new PolygonFace([ [0, 0, 50], [100, 0, 200], [100, 100, 200], [0, 100, 50] ], 'green'),
+    //new PolygonFace([ [100, 0, 0], [100, 100, 0], [100, 100, 200], [100, 0, 200] ], 'green'),
+    //new PolygonFace([ [100, 0, 0], [100, 0, 200], [0, 0, 50], [0, 0, 0] ], 'green'),
+    //new PolygonFace([ [0, 100, 0], [0, 100, 50], [100, 100, 200], [100, 100, 0]  ], 'green'),
+    
+    //new PolygonFace([ [200, 0, 200], [200, 100, 200], [200, 100, 0], [200, 0, 0] ], 'red'),
+    //new PolygonFace([ [200, 0, 200], [300, 0, 50], [300, 100, 50], [200, 100, 200] ], 'red'),
+    //new PolygonFace([ [300, 0, 0], [300, 100, 0], [300, 100, 50], [300, 0, 50] ], 'red'),
+    //new PolygonFace([ [300, 0, 0], [300, 0, 50], [200, 0, 200], [200, 0, 0] ], 'red'),
+    //new PolygonFace([ [200, 100, 0], [200, 100, 200], [300, 100, 50], [300, 100, 0]  ], 'red'),
+
+    new PolygonFace([ [100, 0, 150], [100, 100, 150], [0, 100, 0], [0, 0, 0] ], 'orange'),
+  ];
+  console.log(cubeFaces);
+
+  function normalizeVector(vertex) {
+    const length = Math.sqrt((vertex[0] * vertex[0]) + (vertex[1] * vertex[1]) + (vertex[2] * vertex[2]));
+    return vertex.map(v => (v / length));
+  }
+
+  function degreesToRadians(degrees) {
+    return degrees * Math.PI / 180;
+  }
+
+  function project3dTo2d(vertex, cameraPosition, cameraAngle) {
+    let [x, y, z] = vertex;
+    const [cx, cy, cz] = cameraPosition;
+    const cameraRadians = degreesToRadians(cameraAngle + 45);
+
+    // adjust by camera position
+    [x, y, z] = [x - cx, y - cy, z - cz];
+
+    // rotate
+    rx = x * Math.cos(cameraRadians) - y * Math.sin(cameraRadians);
+    ry = x * Math.sin(cameraRadians) + y * Math.cos(cameraRadians);
+
+    // project x
+    const resultX =
+      rx * Math.cos(degreesToRadians(30)) +
+      ry * Math.cos(degreesToRadians(150)) +
+      z * Math.cos(degreesToRadians(-90)) +
+      CANVAS_WIDTH / 2;
+
+    // project y
+    const resultY =
+      rx * Math.sin(degreesToRadians(30)) +
+      ry * Math.sin(degreesToRadians(150)) +
+      z * Math.sin(degreesToRadians(-90)) +
+      CANVAS_HEIGHT / 2;
+
+    return [resultX, resultY];
+  }
+
+  function fillPolygon(face, cameraPosition, cameraAngle, context) {
+    // draw edges
+    context.beginPath();
+    context.moveTo(...project3dTo2d(face.vertices[0], cameraPosition, cameraAngle));
+
+    face.vertices.forEach(vertex => {
+      context.lineTo(...project3dTo2d(vertex, cameraPosition, cameraAngle));
+    });
+
+    context.lineTo(...project3dTo2d(face.vertices[0], cameraPosition, cameraAngle));
+
+    context.fillStyle = face.color;
+    //context.fill();
+
+    context.closePath();
+    context.strokeStyle = '#000';
+    context.stroke();
+    
+    // display normal
+    context.beginPath();
+    context.moveTo(...project3dTo2d(face.middle, cameraPosition, cameraAngle));
+
+    const normalEndPoint = face.middle.map((val, index) => {
+      return val + face.normal[index] * 30;
+    });
+
+    context.lineTo(...project3dTo2d(normalEndPoint, cameraPosition, cameraAngle));
+
+    context.closePath();
+    context.strokeStyle = '#000';
+    context.stroke();
+
+
+    // camera vector
+    const cameraVector = [
+      Math.cos(degreesToRadians(cameraAngle)),
+      Math.sin(degreesToRadians(cameraAngle)),
+      -Math.cos(degreesToRadians(56.31)),
+    ];
+
+    //console.log(cameraVector, normalizeVector(cameraVector));
+
+    // camera position
+    const cameraSpot = [
+      100 * Math.cos(degreesToRadians(cameraAngle)),
+      100 * Math.sin(degreesToRadians(cameraAngle)),
+      100 * Math.sin(degreesToRadians(56.31)),
+    ];
+
+    console.log(cameraSpot);
+
+    // display normal
+    context.beginPath();
+    context.moveTo(...project3dTo2d(face.middle, cameraPosition, cameraAngle));
+    context.lineTo(...project3dTo2d(cameraSpot, cameraPosition, cameraAngle));
+    context.closePath();
+    context.strokeStyle = 'red';
+    context.stroke();
+  }
+
+  // camera
+  const cameraPosition = [50, 50, 50];//[150, 50, 100];
+  let cameraAngle = -45;// Math.floor(Math.random() * 360);
+
+  // drawing context
+  const context = document.getElementById('canvas').getContext('2d');
+  context.strokeStyle = '#000000';
+  context.lineWidth = '1';
+
+  setInterval(() => {
+    context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    cubeFaces.forEach(face => {
+      fillPolygon(face, cameraPosition, cameraAngle, context);
+    });
+
+    // debug log
+    
+
+    // draw compass(?)
+    context.beginPath();
+    context.moveTo(...project3dTo2d([150, 50, 0], cameraPosition, cameraAngle));
+    context.lineTo(...project3dTo2d([170, 50, 0], cameraPosition, cameraAngle));
+    context.strokeStyle = 'green';
+    context.stroke();
+    context.closePath();
+
+    context.beginPath();
+    context.moveTo(...project3dTo2d([150, 50, 0], cameraPosition, cameraAngle));
+    context.lineTo(...project3dTo2d([150, 70, 0], cameraPosition, cameraAngle));
+    context.strokeStyle = 'blue';
+    context.stroke();
+    context.closePath();
+
+    context.beginPath();
+    context.moveTo(...project3dTo2d([150, 50, 0], cameraPosition, cameraAngle));
+    context.lineTo(...project3dTo2d([150, 50, 20], cameraPosition, cameraAngle));
+    context.strokeStyle = 'red';
+    context.stroke();
+    context.closePath();
+
+    /*const cameraSource = [
+      cameraPosition[0] + 400 * Math.cos(degreesToRadians(-cameraAngle + 45)),
+      cameraPosition[1] + 400 * Math.sin(degreesToRadians(-cameraAngle + 45)),
+      cameraPosition[2] + 285 // NO IDEA HOW THIS WORKS???
+    ];
+
+    const cameraDistance = Math.sqrt((cameraSource[0] * cameraSource[0]) + (cameraSource[1] * cameraSource[1]) + (cameraSource[2] * cameraSource[2]));
+    const cameraVector = [
+      cameraSource[0] / cameraDistance,
+      cameraSource[1] / cameraDistance,
+      cameraSource[2] / cameraDistance,
+    ];
+
+    //console.log(cameraVector);
+
+    context.beginPath();
+    context.moveTo(...project3dTo2d(cameraPosition, cameraPosition, cameraAngle));
+    context.lineTo(...project3dTo2d(cameraSource, cameraPosition, cameraAngle));
+    context.strokeStyle = 'red';
+    context.stroke();
+    context.closePath();*/
+
+    context.fillStyle = 'green';
+    context.fillRect(...project3dTo2d([0, 0, 0], cameraPosition, cameraAngle), 3, 3);
+
+    if (spinning) {
+      cameraAngle = (cameraAngle + 1) % 360;
+    }
+  }, 10);
+</script>
