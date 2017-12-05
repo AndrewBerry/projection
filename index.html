@@ -170,10 +170,7 @@
     context.strokeStyle = 'red';
     context.stroke();
     context.closePath();
-
-    context.fillStyle = 'green';
-    context.fillRect(...project3dTo2d([0, 0, 0], cameraPosition, cameraAngle), 3, 3);
-
+    
     requestAnimationFrame(draw);
   })();
 </script>
