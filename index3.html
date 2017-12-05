@@ -1,4 +1,4 @@
-<button onclick="spinning = !spinning">Toggle</button>
+<button onclick="spinning = !spinning">Toggle Rotation</button>
 <canvas id="canvas" width="800" height="600"></canvas>
 
 <style>
@@ -13,7 +13,7 @@
 </style>
 
 <script>
-  let spinning = false;
+  let spinning = true;
 
   class PolygonFace {
     constructor(vertices, color) {
@@ -46,19 +46,17 @@
 
   // cube
   const cubeFaces = [
-    //new PolygonFace([ [0, 0, 50], [0, 100, 50], [0, 100, 0], [0, 0, 0] ], 'green'),
-    //new PolygonFace([ [0, 0, 50], [100, 0, 200], [100, 100, 200], [0, 100, 50] ], 'green'),
-    //new PolygonFace([ [100, 0, 0], [100, 100, 0], [100, 100, 200], [100, 0, 200] ], 'green'),
-    //new PolygonFace([ [100, 0, 0], [100, 0, 200], [0, 0, 50], [0, 0, 0] ], 'green'),
-    //new PolygonFace([ [0, 100, 0], [0, 100, 50], [100, 100, 200], [100, 100, 0]  ], 'green'),
+    new PolygonFace([ [0, 0, 50], [0, 100, 50], [0, 100, 0], [0, 0, 0] ], 'green'),
+    new PolygonFace([ [0, 0, 50], [100, 0, 200], [100, 100, 200], [0, 100, 50] ], 'green'),
+    new PolygonFace([ [100, 0, 0], [100, 100, 0], [100, 100, 200], [100, 0, 200] ], 'green'),
+    new PolygonFace([ [100, 0, 0], [100, 0, 200], [0, 0, 50], [0, 0, 0] ], 'green'),
+    new PolygonFace([ [0, 100, 0], [0, 100, 50], [100, 100, 200], [100, 100, 0]  ], 'green'),
     
-    //new PolygonFace([ [200, 0, 200], [200, 100, 200], [200, 100, 0], [200, 0, 0] ], 'red'),
-    //new PolygonFace([ [200, 0, 200], [300, 0, 50], [300, 100, 50], [200, 100, 200] ], 'red'),
-    //new PolygonFace([ [300, 0, 0], [300, 100, 0], [300, 100, 50], [300, 0, 50] ], 'red'),
-    //new PolygonFace([ [300, 0, 0], [300, 0, 50], [200, 0, 200], [200, 0, 0] ], 'red'),
-    //new PolygonFace([ [200, 100, 0], [200, 100, 200], [300, 100, 50], [300, 100, 0]  ], 'red'),
-
-    new PolygonFace([ [100, 0, 150], [100, 100, 150], [0, 100, 0], [0, 0, 0] ], 'orange'),
+    new PolygonFace([ [200, 0, 200], [200, 100, 200], [200, 100, 0], [200, 0, 0] ], 'blue'),
+    new PolygonFace([ [200, 0, 200], [300, 0, 50], [300, 100, 50], [200, 100, 200] ], 'blue'),
+    new PolygonFace([ [300, 0, 0], [300, 100, 0], [300, 100, 50], [300, 0, 50] ], 'blue'),
+    new PolygonFace([ [300, 0, 0], [300, 0, 50], [200, 0, 200], [200, 0, 0] ], 'blue'),
+    new PolygonFace([ [200, 100, 0], [200, 100, 200], [300, 100, 50], [300, 100, 0]  ], 'blue'),
   ];
   console.log(cubeFaces);
 
@@ -115,7 +113,7 @@
     //context.fill();
 
     context.closePath();
-    context.strokeStyle = '#000';
+    context.strokeStyle = face.color;
     context.stroke();
     
     // display normal
@@ -129,39 +127,12 @@
     context.lineTo(...project3dTo2d(normalEndPoint, cameraPosition, cameraAngle));
 
     context.closePath();
-    context.strokeStyle = '#000';
-    context.stroke();
-
-
-    // camera vector
-    const cameraVector = [
-      Math.cos(degreesToRadians(cameraAngle)),
-      Math.sin(degreesToRadians(cameraAngle)),
-      -Math.cos(degreesToRadians(56.31)),
-    ];
-
-    //console.log(cameraVector, normalizeVector(cameraVector));
-
-    // camera position
-    const cameraSpot = [
-      100 * Math.cos(degreesToRadians(cameraAngle)),
-      100 * Math.sin(degreesToRadians(cameraAngle)),
-      100 * Math.sin(degreesToRadians(56.31)),
-    ];
-
-    console.log(cameraSpot);
-
-    // display normal
-    context.beginPath();
-    context.moveTo(...project3dTo2d(face.middle, cameraPosition, cameraAngle));
-    context.lineTo(...project3dTo2d(cameraSpot, cameraPosition, cameraAngle));
-    context.closePath();
-    context.strokeStyle = 'red';
+    context.strokeStyle = 'rgba(0, 0, 0, 0.2)';
     context.stroke();
   }
 
   // camera
-  const cameraPosition = [50, 50, 50];//[150, 50, 100];
+  const cameraPosition = [150, 50, 100];
   let cameraAngle = -45;// Math.floor(Math.random() * 360);
 
   // drawing context
@@ -169,15 +140,20 @@
   context.strokeStyle = '#000000';
   context.lineWidth = '1';
 
+  // update
   setInterval(() => {
+    if (spinning) {
+      cameraAngle = (cameraAngle + 1) % 360;
+    }
+  }, 15);
+
+  // draw
+  (function draw() {
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     cubeFaces.forEach(face => {
       fillPolygon(face, cameraPosition, cameraAngle, context);
     });
-
-    // debug log
     
-
     // draw compass(?)
     context.beginPath();
     context.moveTo(...project3dTo2d([150, 50, 0], cameraPosition, cameraAngle));
@@ -200,33 +176,9 @@
     context.stroke();
     context.closePath();
 
-    /*const cameraSource = [
-      cameraPosition[0] + 400 * Math.cos(degreesToRadians(-cameraAngle + 45)),
-      cameraPosition[1] + 400 * Math.sin(degreesToRadians(-cameraAngle + 45)),
-      cameraPosition[2] + 285 // NO IDEA HOW THIS WORKS???
-    ];
-
-    const cameraDistance = Math.sqrt((cameraSource[0] * cameraSource[0]) + (cameraSource[1] * cameraSource[1]) + (cameraSource[2] * cameraSource[2]));
-    const cameraVector = [
-      cameraSource[0] / cameraDistance,
-      cameraSource[1] / cameraDistance,
-      cameraSource[2] / cameraDistance,
-    ];
-
-    //console.log(cameraVector);
-
-    context.beginPath();
-    context.moveTo(...project3dTo2d(cameraPosition, cameraPosition, cameraAngle));
-    context.lineTo(...project3dTo2d(cameraSource, cameraPosition, cameraAngle));
-    context.strokeStyle = 'red';
-    context.stroke();
-    context.closePath();*/
-
     context.fillStyle = 'green';
     context.fillRect(...project3dTo2d([0, 0, 0], cameraPosition, cameraAngle), 3, 3);
 
-    if (spinning) {
-      cameraAngle = (cameraAngle + 1) % 360;
-    }
-  }, 10);
+    requestAnimationFrame(draw);
+  })();
 </script>
