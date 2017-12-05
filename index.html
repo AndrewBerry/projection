@@ -1,4 +1,3 @@
-<button onclick="spinning = !spinning">Toggle Rotation</button>
 <canvas id="canvas" width="800" height="600"></canvas>
 
 <style>
@@ -13,8 +12,6 @@
 </style>
 
 <script>
-  let spinning = true;
-
   class PolygonFace {
     constructor(vertices, color) {
       this.vertices = vertices;
@@ -142,9 +139,7 @@
 
   // update
   setInterval(() => {
-    if (spinning) {
-      cameraAngle = (cameraAngle + 1) % 360;
-    }
+    cameraAngle = (cameraAngle + 1) % 360;
   }, 15);
 
   // draw
